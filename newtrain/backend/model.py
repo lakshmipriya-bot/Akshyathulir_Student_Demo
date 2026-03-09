@@ -13,6 +13,7 @@ class Trainer(BaseModel):
     courses: int = 0
     status: str = "Active"
     rating: Optional[float] = 4.5
+    adminEmail: str
     
     
     

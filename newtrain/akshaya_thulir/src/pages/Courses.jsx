@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Card,
@@ -15,293 +15,174 @@ import {
   Stack,
   Divider,
 } from "@mui/material";
-
-import { Search, Close, Visibility, Edit, Delete } from "@mui/icons-material";
 import Api from "./api";
+import Search from "@mui/icons-material/Search";
+import Visibility from "@mui/icons-material/Visibility";
+import Edit from "@mui/icons-material/Edit";
+import Delete from "@mui/icons-material/Delete";
 
-/* -------------------- DATA -------------------- */
-const courses_main = [
-  {
-    id: "CRS001",
-    name: "FullStack Development",
-    duration: "6 months",
-    fees: "$2,500",
-    trainer: "John Smith",
-    status: "Active",
-    enrolled: 45,
-    schedule: "Mon - Fri | 9 AM - 11 AM",
-    eligibility: "Basic programming knowledge",
-    description:
-      "Learn frontend and backend development using modern frameworks and tools.",
-    syllabus: [
-      "HTML, CSS, JavaScript",
-      "React.js",
-      "Node.js & Express",
-      "MongoDB",
-      "Project & Deployment",
-    ],
-    outcomes: [
-      "Build full stack applications",
-      "Deploy real-world projects",
-      "Industry-ready skills",
-    ],
-  },
-
-  {
-    id: "CRS002",
-    name: "Data Science & Analytics",
-    duration: "8 months",
-    fees: "$3,200",
-    trainer: "Sarah Johnson",
-    status: "Active",
-    enrolled: 38,
-    schedule: "Mon - Sat | 10 AM - 12 PM",
-    eligibility: "Basic math & Python",
-    description:
-      "Master data analysis, visualization, and machine learning techniques.",
-    syllabus: [
-      "Python & NumPy",
-      "Pandas & Visualization",
-      "Statistics",
-      "Machine Learning",
-      "Capstone Project",
-    ],
-    outcomes: [
-      "Analyze real datasets",
-      "Build ML models",
-      "Data Scientist career",
-    ],
-  },
-
-  {
-    id: "CRS003",
-    name: "Mobile App Development",
-    duration: "5 months",
-    fees: "$2,800",
-    trainer: "Mike Brown",
-    status: "Active",
-    enrolled: 32,
-    schedule: "Mon - Fri | 2 PM - 4 PM",
-    eligibility: "Basic Java or Kotlin",
-    description:
-      "Build Android & cross-platform mobile applications from scratch.",
-    syllabus: [
-      "UI/UX Basics",
-      "Android Studio",
-      "Kotlin",
-      "API Integration",
-      "Play Store Deployment",
-    ],
-    outcomes: [
-      "Create Android apps",
-      "Publish apps",
-      "Mobile developer skills",
-    ],
-  },
-
-  {
-    id: "CRS004",
-    name: "Cloud Computing (AWS)",
-    duration: "4 months",
-    fees: "$2,000",
-    trainer: "Emily Davis",
-    status: "Active",
-    enrolled: 28,
-    schedule: "Weekend | 10 AM - 1 PM",
-    eligibility: "Basic networking knowledge",
-    description: "Learn cloud infrastructure, deployment, and AWS services.",
-    syllabus: [
-      "Cloud Basics",
-      "EC2 & S3",
-      "IAM",
-      "Cloud Security",
-      "Deployment Projects",
-    ],
-    outcomes: [
-      "AWS certification ready",
-      "Deploy cloud apps",
-      "Cloud engineer role",
-    ],
-  },
-
-  {
-    id: "CRS005",
-    name: "Cyber Security",
-    duration: "6 months",
-    fees: "$3,000",
-    trainer: "Alex Turner",
-    status: "Active",
-    enrolled: 40,
-    schedule: "Mon - Fri | 11 AM - 1 PM",
-    eligibility: "Basic networking",
-    description: "Protect systems and networks from cyber threats.",
-    syllabus: [
-      "Network Security",
-      "Ethical Hacking",
-      "Penetration Testing",
-      "Firewalls",
-      "Security Tools",
-    ],
-    outcomes: [
-      "Cyber security analyst",
-      "Ethical hacker skills",
-      "Security certifications",
-    ],
-  },
-
-  {
-    id: "CRS006",
-    name: "UI / UX Design",
-    duration: "3 months",
-    fees: "$1,800",
-    trainer: "Jessica Lee",
-    status: "Active",
-    enrolled: 25,
-    schedule: "Mon - Thu | 4 PM - 6 PM",
-    eligibility: "Creativity & interest in design",
-    description:
-      "Design user-friendly and visually appealing digital products.",
-    syllabus: [
-      "Design Principles",
-      "Figma",
-      "Wireframing",
-      "Prototyping",
-      "Portfolio Project",
-    ],
-    outcomes: [
-      "UI/UX designer role",
-      "Design portfolio",
-      "User-centered thinking",
-    ],
-  },
-
-  {
-    id: "CRS007",
-    name: "Artificial Intelligence",
-    duration: "7 months",
-    fees: "$3,500",
-    trainer: "Dr. Robert White",
-    status: "Active",
-    enrolled: 30,
-    schedule: "Mon - Fri | 8 AM - 10 AM",
-    eligibility: "Python & Math basics",
-    description: "Learn AI concepts, algorithms, and real-world applications.",
-    syllabus: [
-      "AI Fundamentals",
-      "Search Algorithms",
-      "Neural Networks",
-      "Deep Learning",
-      "AI Projects",
-    ],
-    outcomes: [
-      "AI engineer skills",
-      "Build intelligent systems",
-      "Advanced ML knowledge",
-    ],
-  },
-
-  {
-    id: "CRS008",
-    name: "Digital Marketing",
-    duration: "3 months",
-    fees: "$1,500",
-    trainer: "Rachel Green",
-    status: "Active",
-    enrolled: 50,
-    schedule: "Weekend | 2 PM - 5 PM",
-    eligibility: "Basic internet knowledge",
-    description: "Promote brands and products using digital platforms.",
-    syllabus: [
-      "SEO",
-      "Social Media Marketing",
-      "Google Ads",
-      "Email Marketing",
-      "Campaign Analytics",
-    ],
-    outcomes: [
-      "Digital marketer role",
-      "Run ad campaigns",
-      "Marketing analytics",
-    ],
-  },
-];
 /* -------------------- INITIAL STATE -------------------- */
 const initialState = {
   name: "",
   category: "",
   duration: "",
   fees: "",
-  status: "Draft",
+  status: "",
   startDate: "",
   trainer: "",
   description: "",
+  syllabus: "",
+  outcomes: "",
+  email: ""
 };
 
 const Courses = () => {
-  const [courses, setCourses] = useState(courses_main);
+  // add course
+  const [courses, setCourses] = useState([]);
   const [openAdd, setOpenAdd] = useState(false);
+  const [newCourse, setNewCourse] = useState(initialState);
+  const email = localStorage.getItem("userEmail");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedCourse, setSelectedCourse] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [newCourse, setNewCourse] = useState(initialState);
-  
+  const [isEdit, setIsEdit] = useState(false);
+  const [editId, setEditId] = useState(null);
 
+  useEffect(() => {
+    fetchCourses();
+  }, []);
 
+  const fetchCourses = async () => {
+  const email = localStorage.getItem("userEmail");
 
-
-
-  
+  try {
+    const res = await Api.get(`/courses/${email}`);
+    setCourses(res.data);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   /* -------------------- ADD COURSE -------------------- */
-  
-  const handleAddCourse = async (e) => {
-    e.preventDefault();
+
+  const filteredCourses = courses.filter(
+    (c) => c.name && c.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  /* -------------------- DELETE COURSE -------------------- */
+  const handleDeleteCourse = async (id) => {
+    if (!window.confirm("Delete this course?")) return;
 
     try {
-      setLoading(true);
-
-      const res = await Api.post("/courses", newCourse);
-
-      // Update UI with backend response
-      setCourses((prev) => [...prev, res.data.data]);
-
-      alert("✅ Course Added Successfully!");
-      setOpenAdd(false);
-      setNewCourse(initialState);
+      await Api.delete(`/courses/${id}/`);
+      setCourses((prev) => prev.filter((c) => c._id !== id));
     } catch (err) {
       console.error(err);
-      alert("❌ Error while adding course");
-    } finally {
-      setLoading(false);
+      alert("❌ Delete failed");
     }
   };
 
- const filteredCourses = courses.filter((c) => {
-  if (!c || !c.name) return false;
+  const handleAddCourse = async () => {
+    if (!validateForm()) return;
 
-  return `${c.name} ${c.id ?? ""} ${c.trainer ?? ""}`
-    .toLowerCase()
-    .includes(search.toLowerCase());
-});
+    try {
+      const payload = {
+        name: newCourse.name,
+        category: newCourse.category,
+        duration: newCourse.duration,
+        fees: newCourse.fees,
+        trainer: newCourse.trainer,
+        status: newCourse.status,
+        description: newCourse.description,
+        syllabus: newCourse.syllabus
+          ? newCourse.syllabus.split(",").map((s) => s.trim())
+          : [],
+        outcomes: newCourse.outcomes
+          ? newCourse.outcomes.split(",").map((o) => o.trim())
+          : [],
+          email: email  
+      };
 
+      if (isEdit) {
+        await Api.put(`/courses/${editId}/`, payload);
+      } else {
+        await Api.post("/courses/", { ...payload, enrolled: 0 });
+      }
 
+      await fetchCourses();
+
+      setOpenAdd(false);
+      setNewCourse(initialState);
+      setIsEdit(false);
+      setEditId(null);
+    } catch (err) {
+      console.error(err.response?.data || err);
+      alert("❌ Failed to save course");
+    }
+  };
+  const [errors, setErrors] = useState({});
+  const validateForm = () => {
+    let newErrors = {};
+
+    if (!newCourse.name.trim()) {
+      newErrors.name = "Course name is required";
+    }
+
+    if (!newCourse.category.trim()) {
+      newErrors.category = "Category is required";
+    }
+
+    if (!newCourse.duration.trim()) {
+      newErrors.duration = "Duration is required";
+    }
+
+    if (!newCourse.fees.trim()) {
+      newErrors.fees = "Fees is required";
+    } else if (!/^[0-9]+$/.test(newCourse.fees)) {
+      newErrors.fees = "Fees must contain only numbers";
+    }
+
+    if (!newCourse.trainer.trim()) {
+      newErrors.trainer = "Trainer name is required";
+    } else if (!/^[A-Za-z\s]+$/.test(newCourse.trainer)) {
+      newErrors.trainer = "Trainer name must contain only letters";
+    }
+
+    if (!newCourse.status.trim()) {
+      newErrors.status = "Status is required";
+    }
+
+    if (!newCourse.description.trim()) {
+      newErrors.description = "Description is required";
+    }
+
+    if (!newCourse.syllabus || !newCourse.syllabus.trim()) {
+      newErrors.syllabus = "Syllabus is required";
+    }
+
+    if (!newCourse.outcomes || !newCourse.outcomes.trim()) {
+      newErrors.outcomes = "Outcomes are required";
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
 
   return (
     <Box p={4}>
       {/* HEADER */}
+      {/* stack arrange the component */}
       <Stack direction="row" justifyContent="space-between" mb={2}>
         <Box>
           <Typography variant="h4" fontWeight="bold">
             Courses
           </Typography>
-          <Typography color="text.secondary">
-            Explore available courses
-          </Typography>
+          <Typography color="gray">Explore available courses</Typography>
         </Box>
 
         <Button
-          variant="outlined"
+          variant="outlined" //border
           onClick={() => setOpenAdd(true)}
           sx={{
             borderColor: "#1f4d3a",
@@ -337,7 +218,13 @@ const Courses = () => {
       {/* COURSE CARDS */}
       <Grid container spacing={3}>
         {filteredCourses.map((course) => (
-          <Grid item xs={12} md={4} key={course.id} sx={{width:300,height:350}}>
+          <Grid
+            item
+            xs={12}
+            md={4}
+            key={course._id}
+            sx={{ width: 300, height: 350 }}
+          >
             <Card
               sx={{
                 borderRadius: 2,
@@ -409,10 +296,33 @@ const Courses = () => {
                     >
                       <Visibility fontSize="small" />
                     </IconButton>
-                    <IconButton size="small">
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setIsEdit(true);
+                        setEditId(course._id);
+                        setNewCourse({
+                          name: course.name || "",
+                          category: course.category || "",
+                          duration: course.duration || "",
+                          fees: course.fees || "",
+                          trainer: course.trainer || "",
+                          status: course.status || "Active",
+                          description: course.description || "",
+                          syllabus: (course.syllabus || []).join(", "),
+                          outcomes: (course.outcomes || []).join(", "),
+                        });
+                        setOpenAdd(true);
+                      }}
+                    >
                       <Edit fontSize="small" />
                     </IconButton>
-                    <IconButton size="small" sx={{ color: "error.main" }}>
+
+                    <IconButton
+                      size="small"
+                      sx={{ color: "error.main" }}
+                      onClick={() => handleDeleteCourse(course._id)}
+                    >
                       <Delete fontSize="small" />
                     </IconButton>
                   </Stack>
@@ -423,240 +333,344 @@ const Courses = () => {
         ))}
       </Grid>
 
-      {/* ADD COURSE MODAL */}
+      {/* ADD COURSE DIALOG */}
       <Dialog
         open={openAdd}
-        onClose={() => setOpenAdd(false)}
-        maxWidth="sm"
+        onClose={() => {
+          setOpenAdd(false);
+          setIsEdit(false);
+          setEditId(null);
+          setNewCourse(initialState);
+        }}
         fullWidth
+        maxWidth="sm"
+        PaperProps={{ sx: { borderRadius: 3 } }}
       >
-        <Box p={3}>
-          <Stack direction="row" justifyContent="space-between" mb={2}>
-            <Typography variant="h6">Add New Course</Typography>
-            <IconButton onClick={() => setOpenAdd(false)}>
-              <Close />
-            </IconButton>
-          </Stack>
+        <Box sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            {isEdit ? "Edit Course" : "Add Course"}
+          </Typography>
 
-          <Stack spacing={2}>
-            <TextField
-              label="Course Name"
-              placeholder="eg:FullStack Developer"
-              fullWidth
-              value={newCourse.name}
-              onChange={(e) =>
-                setNewCourse({ ...newCourse, name: e.target.value })
-              }
-            />
+          <Grid container spacing={2}>
+            {/* Row 1 */}
+            <Grid size={6}>
+              <Typography fontSize={14} fontWeight={500} mb={0.5}>
+                Course Name *
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="e.g. Full Stack Development"
+                name="name"
+                value={newCourse.name}
+                error={!!errors.name}
+                helperText={errors.name}
+                onChange={(e) =>
+                  setNewCourse({ ...newCourse, name: e.target.value })
+                }
+              />
+            </Grid>
 
-            <Grid container spacing={2}>
-              <Grid size={6}>
-                <TextField
-                  select
-                  label="Category"
-                  fullWidth
-                  value={newCourse.category}
-                  onChange={(e) =>
-                    setNewCourse({ ...newCourse, category: e.target.value })
-                  }
-                >
-                  <MenuItem value="IT">IT</MenuItem>
-                  <MenuItem value="Design">Design</MenuItem>
+            <Grid size={6}>
+              <Typography fontSize={14} fontWeight={500} mb={0.5}>
+                Category
+              </Typography>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                name="category"
+                value={newCourse.category}
+                error={!!errors.category}
+                helperText={errors.category}
+                onChange={(e) =>
+                  setNewCourse({ ...newCourse, category: e.target.value })
+                }
+                SelectProps={{
+                    displayEmpty: true,
+                    renderValue: (selected) => {
+                      if (selected === "") {
+                        return (
+                          <span style={{ color: "#aaa" }}>Select Category</span>
+                        );
+                      }
+                      return selected;
+                    },
+                  }}
+              >
+                <MenuItem value="IT & Software">IT & Software</MenuItem>
+                <MenuItem value="Business">Business</MenuItem>
+                <MenuItem value="Design">Design</MenuItem>
+                <MenuItem value="Marketing">Marketing</MenuItem>
+              </TextField>
+            </Grid>
 
-                  <MenuItem value="Marketing">Marketing</MenuItem>
-                  <MenuItem value="Finance">Finance</MenuItem>
-                  <MenuItem value="Language">Language</MenuItem>
-                </TextField>
-              </Grid>
-
-              <Grid size={6}>
-                <TextField
-                  select
-                  label="Duration"
-                  placeholder=""
-                  fullWidth
-                  value={newCourse.duration}
-                  onChange={(e) =>
-                    setNewCourse({ ...newCourse, duration: e.target.value })
-                  }
-                >
-                  <MenuItem value="1 month">1 month</MenuItem>
-                  <MenuItem value="2 month">2 month</MenuItem>
-
-                  <MenuItem value="3 month">3 month</MenuItem>
-                  <MenuItem value="4 month">4 month</MenuItem>
-                  <MenuItem value="5 month">5 month</MenuItem>
-                  <MenuItem value="6 month">6 month</MenuItem>
-                  <MenuItem value="12 month">12 month</MenuItem>
-                </TextField>
-              </Grid>
-              <Grid size={6}>
-                <TextField
-                  label="Fees"
-                  placeholder="eg:25000"
-                  fullWidth
-                  value={newCourse.fees}
-                  onChange={(e) =>
-                    setNewCourse({ ...newCourse, fees: e.target.value })
-                  }
-                />
-              </Grid>
-              <Grid size={6}>
-                <TextField
-                  label="Start Date"
-                  type="date"
-                  InputLabelProps={{ shrink: true }}
-                  placeholder="DD / MM / YYYY"
-                  fullWidth
-                />
-              </Grid>
+            {/* Row 2 */}
+            <Grid size={6}>
+              <Typography fontSize={14} fontWeight={500} mb={0.5}>
+                Duration *
+              </Typography>
 
               <TextField
-                label="Trainer"
-                placeholder="Trainer Name"
+                select
                 fullWidth
+                size="small"
+                name="duration"
+                value={newCourse.duration}
+                error={!!errors.duration}
+                helperText={errors.duration}
+                onChange={(e) =>
+                  setNewCourse({ ...newCourse, duration: e.target.value })
+                }
+                SelectProps={{
+                    displayEmpty: true,
+                    renderValue: (selected) => {
+                      if (selected === "") {
+                        return (
+                          <span style={{ color: "#aaa" }}>Select Duration</span>
+                        );
+                      }
+                      return selected;
+                    },
+                  }}
+              >
+                <MenuItem value="1 month">1 Month</MenuItem>
+                <MenuItem value="2 month">2 Months</MenuItem>
+                <MenuItem value="3 month">3 Months</MenuItem>
+                <MenuItem value="5 month">5 Months</MenuItem>
+                <MenuItem value="6 month">6 Months</MenuItem>
+              </TextField>
+            </Grid>
+
+            <Grid size={6}>
+              <Typography fontSize={14} fontWeight={500} mb={0.5}>
+                Fees *
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="e.g. ₹ 25,000"
+                name="fees"
+                value={newCourse.fees}
+                error={!!errors.fees}
+                helperText={errors.fees}
+                onChange={(e) =>
+                  setNewCourse({ ...newCourse, fees: e.target.value })
+                }
+              />
+            </Grid>
+
+            {/* Row 3 */}
+            <Grid size={6}>
+              <Typography fontSize={14} fontWeight={500} mb={0.5}>
+                Trainer
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Trainer Name"
+                name="trainer"
                 value={newCourse.trainer}
+                error={!!errors.trainer}
+                helperText={errors.trainer}
                 onChange={(e) =>
                   setNewCourse({ ...newCourse, trainer: e.target.value })
                 }
               />
             </Grid>
 
-            <TextField
-              label="Description"
-              placeholder="Course details, benefits "
-              multiline
-              rows={3}
-              fullWidth
-              value={newCourse.description}
-              onChange={(e) =>
-                setNewCourse({ ...newCourse, description: e.target.value })
-              }
-            />
+            <Grid size={6}>
+              <Typography fontSize={14} fontWeight={500} mb={0.5}>
+                Status
+              </Typography>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                name="status"
+                value={newCourse.status}
+                error={!!errors.status}
+                helperText={errors.status}
+                onChange={(e) =>
+                  setNewCourse({ ...newCourse, status: e.target.value })
+                }
+                SelectProps={{
+                    displayEmpty: true,
+                    renderValue: (selected) => {
+                      if (selected === "") {
+                        return (
+                          <span style={{ color: "#aaa" }}>Select Status</span>
+                        );
+                      }
+                      return selected;
+                    },
+                  }}
+              >
+                <MenuItem value="Active">Active</MenuItem>
+                <MenuItem value="Draft">Draft</MenuItem>
+                <MenuItem value="Inactive">Inactive</MenuItem>
+              </TextField>
+            </Grid>
 
-            <Stack direction="row" justifyContent="flex-end" spacing={2}>
-              <Button onClick={() => setOpenAdd(false)}>Cancel</Button>
+            {/* Row 4 */}
+            <Grid size={12}>
+              <Typography fontSize={14} fontWeight={500} mb={0.5}>
+                Description
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                multiline
+                rows={3}
+                name="description"
+                value={newCourse.description}
+                error={!!errors.description}
+                helperText={errors.description}
+                onChange={(e) =>
+                  setNewCourse({ ...newCourse, description: e.target.value })
+                }
+              />
+            </Grid>
+
+            {/* Row 5 */}
+            <Grid size={12}>
+              <Typography fontSize={14} fontWeight={500} mb={0.5}>
+                Syllabus (comma separated)
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                name="syllabus"
+                placeholder="HTML, CSS, React, Node"
+                value={newCourse.syllabus || ""}
+                error={!!errors.syllabus}
+                helperText={errors.syllabus}
+                onChange={(e) =>
+                  setNewCourse({ ...newCourse, syllabus: e.target.value })
+                }
+              />
+            </Grid>
+
+            <Grid size={12}>
+              <Typography fontSize={14} fontWeight={500} mb={0.5}>
+                Outcomes (comma separated)
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                name="outcomes"
+                placeholder="Build apps, Deploy projects"
+                value={newCourse.outcomes || ""}
+                error={!!errors.outcomes}
+                helperText={errors.outcomes}
+                onChange={(e) =>
+                  setNewCourse({ ...newCourse, outcomes: e.target.value })
+                }
+              />
+            </Grid>
+
+            {/* Submit Button */}
+            <Grid item xs={12} md={6} textAlign="right">
               <Button
                 variant="contained"
+                sx={{ backgroundColor: "#1b5e20" }}
                 onClick={handleAddCourse}
-                disabled={loading}
-                sx={{
-                  backgroundColor: "#1f4d3a",
-                  color: "#fff",
-                  "&:hover": { backgroundColor: "#163d2f" },
-                }}
               >
-                {loading ? "Adding..." : "Add Course"}
+                {isEdit ? "Update Course" : "Add Course"}
               </Button>
-            </Stack>
-          </Stack>
+            </Grid>
+          </Grid>
         </Box>
       </Dialog>
 
-      {/* VIEW DETAILS */}
-      <Dialog
-        open={detailsOpen}
-        onClose={() => setDetailsOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        {selectedCourse && (
-          <Box>
-            {/* Header with close button */}
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ p: 3, pb: 0 }}
-            >
-              <Typography variant="h6" fontWeight="bold">
-                {selectedCourse.name}
-              </Typography>
-              <IconButton onClick={() => setDetailsOpen(false)} size="small">
-                <Close />
-              </IconButton>
-            </Stack>
+    {/* VIEW DETAILS */}
+<Dialog
+  open={detailsOpen}
+  onClose={() => setDetailsOpen(false)}
+  fullWidth
+  maxWidth="md"
+  PaperProps={{
+    sx: {
+      backgroundColor: "#fff",
+      color: "#000",
+      borderRadius: "16px",
+      padding: 2,
+    },
+  }}
+>
+  {selectedCourse && (
+    <Box p={3}>
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center">
+        <Box>
+          <Typography
+            variant="caption"
+            sx={{ color: "#1e293b", letterSpacing: 1 }}
+          >
+            DATA • IT & SOFTWARE
+          </Typography>
 
-            {/* Category and Status Chips */}
-            <Stack direction="row" spacing={1} sx={{ px: 3, pt: 1, pb: 2 }}>
-              <Chip
-                label={selectedCourse.category || "IT & Software"}
-                size="small"
-                sx={{ fontWeight: 600 }}
-              />
-              <Chip
-                label={selectedCourse.status || "Active"}
-                color={
-                  selectedCourse.status === "Active" ? "success" : "default"
-                }
-                size="small"
-              />
-            </Stack>
+          <Typography variant="h4" fontWeight="bold" mt={1}>
+            {selectedCourse.name}
+          </Typography>
 
-            {/* Divider */}
-            <Divider />
+          <Typography variant="body2" color="gray" mt={1}>
+            Master data analysis, visualization, and machine learning techniques.
+          </Typography>
+        </Box>
+      </Box>
 
-            {/* Content */}
-            <Box sx={{ p: 3 }}>
-              {/* Description */}
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-                {selectedCourse.description}
-              </Typography>
+      <Divider sx={{ my: 3, backgroundColor: "#1e293b" }} />
 
-              {/* Course Details Grid */}
-              <Box
+      {/* Content Section */}
+      <Box display="flex" gap={6} flexWrap="wrap">
+        {/* SYLLABUS */}
+        <Box flex={1} minWidth="250px">
+          <Typography
+            variant="subtitle2"
+            sx={{ color: "#1e293b", mb: 2, letterSpacing: 1 }}
+          >
+            SYLLABUS
+          </Typography>
+
+          {(selectedCourse.syllabus || []).map((item, index) => (
+            <Box key={index} display="flex" alignItems="center" mb={2}>
+              <Typography
                 sx={{
-                  backgroundColor: "#f5f5f5",
-                  p: 2,
-                  borderRadius: 1,
-                  mb: 3,
+                  color: "#1e293b",
+                  fontWeight: "bold",
+                  width: 30,
                 }}
               >
-                <Grid container spacing={2}>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="textSecondary">
-                      Duration
-                    </Typography>
-                    <Typography fontWeight="bold">
-                      {selectedCourse.duration}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="textSecondary">
-                      Fee
-                    </Typography>
-                    <Typography fontWeight="bold">
-                      {selectedCourse.fees}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="textSecondary">
-                      Students
-                    </Typography>
-                    <Typography fontWeight="bold">
-                      {selectedCourse.enrolled}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="textSecondary">
-                      Trainer
-                    </Typography> 
-                    <Typography fontWeight="bold">
-                      {selectedCourse.trainer}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="caption" color="textSecondary">
-                      Start Date
-                    </Typography>
-                    <Typography fontWeight="bold">2025-01-15</Typography>
-                  </Grid>
-                </Grid>
-              </Box>
+                {String(index + 1).padStart(2, "0")}
+              </Typography>
+              <Typography>{item}</Typography>
             </Box>
-          </Box>
-        )}
-      </Dialog>
+          ))}
+        </Box>
+
+        {/* OUTCOMES */}
+        <Box flex={1} minWidth="250px">
+          <Typography
+            variant="subtitle2"
+            sx={{ color: "#1e293b", mb: 2, letterSpacing: 1 }}
+          >
+            OUTCOMES
+          </Typography>
+
+          {(selectedCourse.outcomes || []).map((item, index) => (
+            <Box key={index} display="flex" alignItems="center" mb={2}>
+              <Typography sx={{ color: "#1e293b", mr: 1 }}>
+                →
+              </Typography>
+              <Typography>{item}</Typography>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    </Box>
+  )}
+</Dialog>
     </Box>
   );
 };

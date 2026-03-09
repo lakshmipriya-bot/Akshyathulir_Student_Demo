@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Box,
   Grid,
@@ -25,7 +26,7 @@ import BusinessIcon from "@mui/icons-material/Business";
 import PeopleIcon from "@mui/icons-material/People";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 // InfoOutlinedIcon was removed because it's not used in this file
-
+// import Ads from "./ads";
 import Api from "./api";
 const EDU_COLORS = {
   primary: "#1a3e36",
@@ -43,6 +44,13 @@ const initialAddress = {
 };
 
 const Placements = () => {
+  const [placementStats, setPlacementStats] = useState({
+    highestPackage: 0,
+    studentsPlaced: 0,
+    recruiters: 0,
+    averagePackage: 0,
+  });
+
   const eduCompanyData = [
     {
       id: 1,
@@ -304,18 +312,70 @@ const Placements = () => {
   const eduHandleSubmit = async () => {
     try {
       setLoading(true);
+      const email = localStorage.getItem("userEmail");
 
-      await Api.post("/placements", eduFormData);
+      await Api.post("/placements/", {
+        startupName: eduFormData.startupName,
+        legalStatus: eduFormData.legalStatus,
+        dateOfEstablishment: eduFormData.dateOfEstablishment,
+        primarySector: eduFormData.primarySector,
+        secondarySector: eduFormData.secondarySector || "",
+        companyPAN: eduFormData.companyPAN,
+        gstin: eduFormData.gstin || "",
+        currentTeamSize: Number(eduFormData.currentTeamSize),
+        maleCount: Number(eduFormData.maleCount),
+        femaleCount: Number(eduFormData.femaleCount),
+        companyWebsite: eduFormData.companyWebsite || "",
+        numberOfBranches: Number(eduFormData.numberOfBranches),
+        adminEmail: email,
+      });
 
-      alert("✅ Certification Submitted Successfully!");
-
-      // ✅ Clear form after submit
-      setEduFormData(eduFormData);
+      alert("✅ Company Registered Successfully!");
+      getCompanies();
+      eduHandleReset();
     } catch (error) {
       console.log(error);
-      alert("❌ Error while submitting certificate!");
+      alert("❌ Error while submitting!");
     } finally {
       setLoading(false);
+    }
+  };
+  const [companies, setCompanies] = useState([]);
+  useEffect(() => {
+    const email = localStorage.getItem("userEmail");
+
+    // ✅ call /stats not /kpi_dashboard
+    axios
+      .get(`http://127.0.0.1:8000/api/placements/stats/${email}`)
+      .then((res) => {
+        setPlacementStats({
+          highestPackage: res.data.highestPackage || 0,
+          studentsPlaced: res.data.studentsPlaced || 0,
+          recruiters: res.data.recruiters || 0,
+          averagePackage: res.data.averagePackage || 0,
+        });
+      })
+      .catch((err) => console.log(err));
+
+    getCompanies();
+  }, []);
+  const topRecruiters = [
+    { name: "TCS", logo: "https://www.google.com/s2/favicons?domain=tcs.com&sz=64" },
+    { name: "Infosys", logo: "https://www.google.com/s2/favicons?domain=infosys.com&sz=64" },
+    { name: "Wipro", logo: "https://www.google.com/s2/favicons?domain=wipro.com&sz=64" },
+    { name: "Cognizant", logo: "https://www.google.com/s2/favicons?domain=cognizant.com&sz=64" },
+    { name: "Accenture", logo: "https://www.google.com/s2/favicons?domain=accenture.com&sz=64" },
+  ];
+
+  const getCompanies = async () => {
+    try {
+      const email = localStorage.getItem("userEmail");
+
+      const res = await Api.get(`/placements/admin/${email}`);
+
+      setCompanies(res.data);
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -390,207 +450,108 @@ const Placements = () => {
         >
           Career Launchpad
         </Typography>
-        <Box sx={{ display: "flex", gap: 3 }}>
-          {["THIS WEEK", "THIS MONTH", "6 MONTHS"].map((tab) => (
-            <Typography
-              key={tab}
-              sx={{
-                fontSize: "0.8rem",
-                fontWeight: "bold",
-                color: EDU_COLORS.primary,
-                cursor: "pointer",
-                "&:hover": { opacity: 0.7 },
-              }}
-            >
-              {tab}
-            </Typography>
-          ))}
-        </Box>
       </Box>
       {/* Placement Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={4}>
-          <Card
-            sx={{
-              borderRadius: 2,
-              boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-              bgcolor: "#f1f8e9",
-              transition: "all 0.3s ease",
-              cursor: "pointer",
-              "&:hover": {
-                transform: "scale(1.06)",
-                boxShadow: "0px 8px 25px rgba(0,0,0,0.15)",
-              },
-            }}
-          >
-            <CardContent>
-              {/* Top Row */}
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-              >
-                <Box>
-                  <Typography color="text.secondary" variant="body2">
-                    Students Placed
-                  </Typography>
-                  <Typography variant="h4" fontWeight="bold">
-                    375
-                  </Typography>
-                </Box>
-
-                <PeopleIcon sx={{ fontSize: 36, color: "success.main" }} />
-              </Stack>
-
-              {/* Subtext */}
-              <Typography variant="caption" color="text.secondary">
-                Out of 450 total students
-              </Typography>
-
-              {/* Progress */}
-              <Box sx={{ mt: 2 }}>
-                <LinearProgress
-                  variant="determinate"
-                  value={82}
-                  sx={{
-                    height: 8,
-                    borderRadius: 5,
-                    backgroundColor: "#e0e0e0",
-                    "& .MuiLinearProgress-bar": {
-                      backgroundColor: "success.main",
-                    },
-                  }}
-                />
-                <Typography variant="caption" sx={{ mt: 1, display: "block" }}>
-                  82.0% Placement Rate
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card
-            sx={{
-              borderRadius: 2,
-              boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-              bgcolor: "#e3f2fd",
-              transition: "all 0.3s ease",
-              "&:hover": {
-                transform: "scale(1.06)",
-                boxShadow: "0px 8px 25px rgba(0,0,0,0.15)",
-              },
-            }}
-          >
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={1} mb={2}>
-                <BusinessIcon color="primary" />
-                <Typography color="text.secondary">Top Companies</Typography>
-              </Stack>
-
-              <AvatarGroup max={5} sx={{ justifyContent: "center", mt: 2 }}>
-                <Avatar sx={{ bgcolor: "#1976d2" }}>TCS</Avatar>
-                <Avatar sx={{ bgcolor: "#9c27b0" }}>INF</Avatar>
-                <Avatar sx={{ bgcolor: "#4caf50" }}>WIP</Avatar>
-                <Avatar sx={{ bgcolor: "#1976d2" }}>COG</Avatar>
-                <Avatar sx={{ bgcolor: "#9c27b0" }}>ACC</Avatar>
-              </AvatarGroup>
-
-              <Typography
-                variant="body2"
-                textAlign="center"
-                mt={3}
-                color="text.secondary"
-              >
-                Most Active Recruiters
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card
-            sx={{
-              borderRadius: 2,
-              boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-              bgcolor: "#f1f8e9",
-              transition: "all 0.3s ease",
-              "&:hover": {
-                transform: "scale(1.06)",
-                boxShadow: "0px 8px 25px rgba(0,0,0,0.15)",
-              },
-            }}
-          >
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-                <BusinessIcon color="success" />
-                <Typography color="text.secondary">
-                  Companies Registered
-                </Typography>
-              </Stack>
-
-              <Typography variant="h4" fontWeight="bold">
-                150
-              </Typography>
-
-              <Chip
-                icon={<TrendingUpIcon />}
-                label="0%"
-                size="small"
+        {[
+          {
+            icon: <TrendingUpIcon color="primary" />,
+            value: `₹${placementStats.highestPackage} LPA`,
+            title: "Highest Package",
+            subtitle: "CTC offered",
+          },
+          {
+            icon: <PeopleIcon color="primary" />,
+            value: placementStats.studentsPlaced,
+            title: "Students Placed",
+            subtitle: "Total placements",
+          },
+          {
+            icon: <BusinessIcon color="primary" />,
+            value: placementStats.recruiters,
+            title: "Recruiters",
+            subtitle: "Companies visited",
+          },
+          {
+            icon: <TrendingUpIcon color="primary" />,
+            value: `₹${placementStats.averagePackage} LPA`,
+            title: "Average Package",
+            subtitle: "Across all branches",
+          },
+          {
+            icon: <BusinessIcon color="primary" />,
+            value: "",
+            title: "Top Recruiters",
+            subtitle: "",
+            logos: topRecruiters,
+          },
+        ].map((card, index) => (
+          <Grid item xs={12} sm={6} md={2.4} key={index}>
+            <Card
+              sx={{
+                width: 220,
+                height: 220,
+                margin: "auto",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                textAlign: "center",
+                borderRadius: 3,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                transition: "0.3s",
+                "&:hover": {
+                  transform: "translateY(-6px)",
+                  boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+                },
+              }}
+            >
+              <Box
                 sx={{
-                  mt: 1,
-                  bgcolor: "#e8f5e9",
-                  color: "success.main",
+                  width: 55,
+                  height: 55,
+                  borderRadius: 2,
+                  bgcolor: "#eef2ff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  mb: 2,
                 }}
-              />
+              >
+                {card.icon}
+              </Box>
 
-              <Typography variant="caption" display="block" mt={1}>
-                New tie-ups this season
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              maxHeight: 174, // ⬅ makes card taller
-              boxShadow: "0 6px 16px rgba(0,0,0,0.1)",
-              bgcolor: "#fff3e0",
-              transition: "all 0.3s ease",
-              cursor: "pointer",
-              "&:hover": {
-                transform: "scale(1.05)", // ⬅ slightly bigger hover
-                boxShadow: "0px 10px 30px rgba(0,0,0,0.18)",
-              },
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              {/* Header */}
-              <Stack direction="row" alignItems="center" spacing={1} mb={2}>
-                <TrendingUpIcon sx={{ fontSize: 36 }} color="warning" />
-                <Typography color="text.secondary" variant="body1">
-                  Avg. Package
+              {card.logos ? (
+                <AvatarGroup max={5} sx={{ justifyContent: "center", mb: 1 }}>
+                  {card.logos.map((company, i) => (
+                    <Avatar
+                      key={i}
+                      src={company.logo}
+                      alt={company.name}
+                      sx={{ width: 40, height: 40, bgcolor: "#1a3e36", fontSize: 14 }}
+                    >
+                      {company.name.charAt(0)}  {/* ← shows initial if image fails */}
+                    </Avatar>
+                  ))}
+                </AvatarGroup>
+              ) : (
+                <Typography variant="h5" fontWeight="bold">
+                  {card.value}
                 </Typography>
-              </Stack>
+              )}
 
-              {/* Main Value */}
-              <Typography variant="h4" fontWeight="bold">
-                7.2{" "}
-                <Typography component="span" variant="h6" fontWeight="medium">
-                  LPA
-                </Typography>
-              </Typography>
+              <Typography fontWeight={600}>{card.title}</Typography>
 
-              {/* Footer */}
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Highest: 42 LPA (Microsoft)
+              <Typography variant="body2" color="text.secondary">
+                {card.subtitle}
               </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+            </Card>
+          </Grid>
+        ))}
       </Grid>
+      {/* Top Recruiters Card */}
+
+
       {/* Placement Company Details Table */}
       <Typography
         variant="h6"
@@ -607,46 +568,39 @@ const Placements = () => {
           mb: 4,
         }}
       >
+
         <Table>
+
           <TableHead sx={{ backgroundColor: EDU_COLORS.primary }}>
             <TableRow>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                Company
-              </TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                Job Role
-              </TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                Students Placed
-              </TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                Package (LPA)
-              </TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                Growth
-              </TableCell>
+              <TableCell sx={{ color: "white" }}>Company</TableCell>
+              <TableCell sx={{ color: "white" }}>Sector</TableCell>
+              <TableCell sx={{ color: "white" }}>Team Size</TableCell>
+              <TableCell sx={{ color: "white" }}>Website</TableCell>
+              <TableCell sx={{ color: "white" }}>Branches</TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
-            {eduCompanyData.map((row) => (
-              <TableRow
-                key={row.id}
-                sx={{ "&:nth-of-type(even)": { backgroundColor: "#f9f9f9" } }}
-              >
-                <TableCell sx={{ fontWeight: "bold" }}>{row.name}</TableCell>
-                <TableCell>{row.role}</TableCell>
-                <TableCell>{row.students}</TableCell>
-                <TableCell>{row.package}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={row.growth}
-                    size="small"
-                    color="success"
-                    variant="outlined"
-                  />
+
+
+            {companies.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  No companies registered
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              companies.map((row, index) => (
+                <TableRow key={index}>
+                  <TableCell>{row.startupName}</TableCell>
+                  <TableCell>{row.primarySector}</TableCell>
+                  <TableCell>{row.currentTeamSize}</TableCell>
+                  <TableCell>{row.companyWebsite}</TableCell>
+                  <TableCell>{row.numberOfBranches}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
@@ -878,6 +832,7 @@ const Placements = () => {
           </Grid>
         </CardContent>
       </Card>
+      <Ads page="placements" />
     </Box>
   );
 };

@@ -56,7 +56,9 @@ function Trainers() {
   /* ================= FETCH TRAINERS ================= */
   const fetchTrainers = async () => {
     try {
-      const res = await Api.get("/trainers");
+       const email = localStorage.getItem("userEmail");
+
+const res = await Api.get(`/trainers/${email}`);
 
       const formatted = res.data.map((t) => ({
         ...t,
@@ -117,6 +119,7 @@ function Trainers() {
         email: formData.email,
         phone: formData.phone,
         qualification: formData.qualification,
+        adminEmail: localStorage.getItem("userEmail"),
       };
 
       if (isEdit) {
